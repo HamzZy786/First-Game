@@ -1,5 +1,7 @@
 import pygame
 from settings import *
+from sprites import get_sprite_manager
+from particles import particle_manager
 
 class Player:
     def __init__(self):
@@ -23,6 +25,9 @@ class Player:
         self.invincible = False
         self.invincible_timer = 0
         self.invincible_duration = 60  # 1 second at 60fps
+        
+        # Sprite manager
+        self.sprite_manager = get_sprite_manager()
         
     def reset(self):
         """Reset player for new combat"""
@@ -81,14 +86,16 @@ class Player:
             self.hp -= damage
             self.invincible = True
             self.invincible_timer = self.invincible_duration
+            # Add damage particle effect
+            particle_manager.add_effect(self.rect.centerx, self.rect.centery, "damage")
             return True
         return False
     
     def draw_menu(self, screen, font):
         """Draw action selection menu"""
-        menu_y = SCREEN_HEIGHT - 150
+        menu_y = SCREEN_HEIGHT - 50
         box_width = 150
-        box_height = 50
+        box_height = 75
         
         for i, action in enumerate(self.actions):
             x = 100 + i * (box_width + 20)
@@ -129,7 +136,17 @@ class Player:
         # Flicker if invincible
         if self.invincible and self.invincible_timer % 10 < 5:
             return
-            
-        pygame.draw.rect(screen, RED, self.rect)
-        # Draw a simple heart shape (optional)
-        # For now, just a red square representing the soul
+        
+        # Get appropriate sprite based on health
+        if self.hp < self.max_hp * 0.3:  # Low health
+            sprite = self.sprite_manager.get_sprite('player_heart_damaged')
+        else:
+            sprite = self.sprite_manager.get_sprite('player_heart')
+        
+        if sprite:
+            # Center the sprite on the player rectangle
+            sprite_rect = sprite.get_rect(center=self.rect.center)
+            screen.blit(sprite, sprite_rect)
+        else:
+            # Fallback to colored rectangle if sprite not available
+            pygame.draw.rect(screen, RED, self.rect)

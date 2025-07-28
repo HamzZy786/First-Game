@@ -2,6 +2,7 @@ import pygame
 from player import Player
 from enemy import Enemy
 from settings import *
+from particles import particle_manager
 
 class Combat:
     def __init__(self, screen, font, small_font):
@@ -52,6 +53,9 @@ class Combat:
         # Update player
         self.player.update()
         
+        # Update particle effects
+        particle_manager.update()
+        
         # State machine
         if self.state == "player_turn":
             self.update_player_turn(keys)
@@ -78,6 +82,8 @@ class Combat:
         
         if action == "FIGHT":
             damage = 15  # Base damage
+            # Add damage particle effect
+            particle_manager.add_effect(SCREEN_WIDTH - 150, 80, "explosion")
             if self.enemy.take_damage(damage):
                 self.show_message(f"You dealt {damage} damage! Enemy defeated!", 120)
                 self.state = "victory"
@@ -86,12 +92,16 @@ class Combat:
                 self.start_enemy_turn()
         
         elif action == "ACT":
+            # Add star effect
+            particle_manager.add_effect(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, "stars")
             self.show_message("You try to reason with the enemy...", 120)
             self.start_enemy_turn()
         
         elif action == "ITEM":
             heal_amount = 20
             self.player.hp = min(self.player.max_hp, self.player.hp + heal_amount)
+            # Add healing particle effect
+            particle_manager.add_effect(self.player.rect.centerx, self.player.rect.centery, "heal")
             self.show_message(f"You healed {heal_amount} HP!", 120)
             self.start_enemy_turn()
         
@@ -146,6 +156,9 @@ class Combat:
         # Always draw HP bars
         self.player.draw_hp_bar(self.screen, self.small_font)
         self.enemy.draw(self.screen, self.small_font)
+        
+        # Draw particle effects
+        particle_manager.draw(self.screen)
         
         # Draw message if active
         if self.message_timer > 0:

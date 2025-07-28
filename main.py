@@ -1,6 +1,7 @@
 import pygame
 import sys
 from combat import Combat
+from menu import MainMenu
 from settings import *
 
 class Game:
@@ -16,6 +17,7 @@ class Game:
         
         # Game state
         self.state = "menu"  # menu, combat, game_over
+        self.menu = MainMenu(self.screen, self.font, self.small_font)
         self.combat = Combat(self.screen, self.font, self.small_font)
         
     def handle_events(self):
@@ -24,10 +26,12 @@ class Game:
                 return False
             
             if self.state == "menu":
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        self.state = "combat"
-                        self.combat.reset()
+                result = self.menu.handle_input(event)
+                if result == "start_game":
+                    self.state = "combat"
+                    self.combat.reset()
+                elif result == "quit":
+                    return False
             
             elif self.state == "combat":
                 self.combat.handle_event(event)
@@ -40,36 +44,29 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         self.state = "menu"
+                        self.menu = MainMenu(self.screen, self.font, self.small_font)
                     elif event.key == pygame.K_ESCAPE:
                         return False
                         
         return True
     
     def update(self):
-        if self.state == "combat":
+        if self.state == "menu":
+            self.menu.update()
+        elif self.state == "combat":
             self.combat.update()
     
     def draw(self):
         self.screen.fill(BLACK)
         
         if self.state == "menu":
-            self.draw_menu()
+            self.menu.draw()
         elif self.state == "combat":
             self.combat.draw()
         elif self.state == "game_over":
             self.draw_game_over()
             
         pygame.display.flip()
-    
-    def draw_menu(self):
-        title_text = self.font.render("UNDERTALE-STYLE COMBAT", True, WHITE)
-        start_text = self.small_font.render("Press SPACE to start", True, WHITE)
-        
-        title_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 50))
-        start_rect = start_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50))
-        
-        self.screen.blit(title_text, title_rect)
-        self.screen.blit(start_text, start_rect)
     
     def draw_game_over(self):
         game_over_text = self.font.render("GAME OVER", True, RED)

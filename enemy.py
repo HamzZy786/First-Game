@@ -2,6 +2,7 @@ import pygame
 import random
 import math
 from settings import *
+from sprites import get_sprite_manager
 
 class Enemy:
     def __init__(self):
@@ -20,6 +21,9 @@ class Enemy:
             self.cross_attack,
             self.random_scatter
         ]
+        
+        # Sprite manager
+        self.sprite_manager = get_sprite_manager()
         
     def reset(self):
         """Reset enemy for new combat"""
@@ -87,7 +91,8 @@ class Enemy:
                 'vx': 0,
                 'vy': random.uniform(2, 4),
                 'color': YELLOW,
-                'damage': 10
+                'damage': 10,
+                'sprite_type': 'circle'
             }
             self.bullets.append(bullet)
     
@@ -107,7 +112,8 @@ class Enemy:
                 'vx': math.cos(angle) * speed,
                 'vy': math.sin(angle) * speed,
                 'color': BLUE,
-                'damage': 10
+                'damage': 10,
+                'sprite_type': 'diamond'
             }
             self.bullets.append(bullet)
     
@@ -129,7 +135,8 @@ class Enemy:
                     'vx': dx * speed,
                     'vy': dy * speed,
                     'color': ORANGE,
-                    'damage': 10
+                    'damage': 10,
+                    'sprite_type': 'star'
                 }
                 self.bullets.append(bullet)
     
@@ -173,7 +180,8 @@ class Enemy:
                 'vx': vx,
                 'vy': vy,
                 'color': PURPLE,
-                'damage': 10
+                'damage': 10,
+                'sprite_type': 'square'
             }
             self.bullets.append(bullet)
     
@@ -184,6 +192,15 @@ class Enemy:
     
     def draw(self, screen, font):
         """Draw enemy info and bullets"""
+        # Draw enemy sprite
+        enemy_sprite = self.sprite_manager.get_sprite('enemy_basic')
+        if enemy_sprite:
+            # Position enemy sprite in top right area
+            enemy_x = SCREEN_WIDTH - 150
+            enemy_y = 80
+            sprite_rect = enemy_sprite.get_rect(center=(enemy_x, enemy_y))
+            screen.blit(enemy_sprite, sprite_rect)
+        
         # Draw enemy name and HP
         name_text = font.render(self.name, True, WHITE)
         screen.blit(name_text, (SCREEN_WIDTH - 200, 20))
@@ -197,6 +214,15 @@ class Enemy:
         
         # Draw bullets
         for bullet in self.bullets:
-            pygame.draw.rect(screen, bullet['color'], bullet['rect'])
-            # Optional: Add glow effect or different shapes
-            pygame.draw.rect(screen, WHITE, bullet['rect'], 1)
+            # Try to draw sprite first, fallback to colored rectangle
+            sprite_type = bullet.get('sprite_type', 'circle')
+            sprite = self.sprite_manager.get_bullet_sprite(sprite_type)
+            
+            if sprite:
+                # Center the sprite on the bullet rectangle
+                sprite_rect = sprite.get_rect(center=bullet['rect'].center)
+                screen.blit(sprite, sprite_rect)
+            else:
+                # Fallback to colored rectangle
+                pygame.draw.rect(screen, bullet['color'], bullet['rect'])
+                pygame.draw.rect(screen, WHITE, bullet['rect'], 1)
